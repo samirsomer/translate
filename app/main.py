@@ -4,7 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.templating import Jinja2Templates
 from schemas import TranslationRequest, TaskResponse, TranslationStatus
+import crud
+import models
+from database import get_db, engine
 
+models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
@@ -24,8 +28,12 @@ app.add_middleware(
 )
 
 
-
 @app.post("/translate", response_model=TaskResponse)
 def translate(request: TranslationRequest):
-    # TODO
-    pass
+    task = crud.create_translation_task(
+        get_db.db, task.id, request.text, request.languages
+    )
+    background_tasks.add_task(
+        perform_translation, task.id, request.text, request.languages, get_db.db
+    )
+    return {"task_id": {task.id}}
